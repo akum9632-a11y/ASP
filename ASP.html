@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="kn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AJAY QUIZZES</title>
+  <style>
+    :root{
+      --primary1:#2563eb;
+      --primary2:#06b6d4;
+      --bg1:#f0f7ff;
+      --bg2:#e8faff;
+      --text:#1e293b;
+    }
+    body{
+      margin:0;
+      padding:0;
+      font-family:"Noto Sans Kannada",system-ui;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .card{
+      background:white;
+      box-shadow:0 4px 20px rgba(0,0,0,0.1);
+      border-radius:16px;
+      padding:24px;
+      width:90%;
+      max-width:500px;
+      transition:0.3s;
+    }
+    .hidden{display:none;}
+    h1,h2{text-align:center;color:var(--primary1);}
+    #timer{font-size:1.2rem;font-weight:bold;color:#ef4444;}
+    input{
+      width:100%;padding:10px;margin:12px 0;border-radius:8px;
+      border:1px solid #ccc;font-size:1rem;
+    }
+    button{
+      background:linear-gradient(90deg,var(--primary1),var(--primary2));
+      color:white;border:none;padding:10px 20px;border-radius:8px;
+      font-size:1rem;cursor:pointer;width:100%;
+    }
+    button:disabled{opacity:0.5;cursor:not-allowed;}
+    #choices{display:grid;gap:10px;margin-top:12px;}
+    .choice{
+      border:1px solid #ddd;padding:10px;border-radius:8px;
+      cursor:pointer;transition:0.2s;background:#fafafa;
+    }
+    .choice:hover{background:#e0f2fe;}
+    .choice.correct{background:#dcfce7;border-color:#16a34a;color:#14532d;}
+    .choice.wrong{background:#fee2e2;border-color:#dc2626;color:#7f1d1d;}
+    .choice.selected{border-color:var(--primary1);background:#e0f2fe;}
+  </style>
+</head>
+<body>
+  <main id="app">
+
+    <!-- ಲಾಗಿನ್ -->
+    <section id="login-section" class="card">
+      <h1>🔥 AJAY QUIZZES 🔥</h1>
+      <label for="name-input">ನಿಮ್ಮ ಹೆಸರು ನಮೂದಿಸಿ:</label>
+      <input type="text" id="name-input" placeholder="ಉದಾ: ಅಜಯ್ ಕುಮಾರ್">
+      <button id="start-btn">ಪ್ರಾರಂಭಿಸಿ</button>
+    </section>
+
+    <!-- Quiz -->
+    <section id="quiz-section" class="card hidden">
+      <div id="quiz-header">
+        <h2 id="subject-title">ಪ್ರಶ್ನೆ ವಿಭಾಗ</h2>
+        <div id="timer">🕒 30</div>
+      </div>
+      <div id="question-area">
+        <p id="question-number"></p>
+        <h3 id="question-text"></h3>
+      </div>
+      <div id="choices"></div>
+      <div id="controls">
+        <button id="submit-btn" disabled>ಸಲ್ಲಿಸು</button>
+      </div>
+    </section>
+
+    <!-- ಫಲಿತಾಂಶ -->
+    <section id="result-section" class="card hidden">
+      <h2>ಫಲಿತಾಂಶ</h2>
+      <p id="score-text"></p>
+      <button id="restart-btn">ಮತ್ತೆ ಆರಂಭಿಸು</button>
+    </section>
+
+  </main>
+
+  <script>
+    const QUESTIONS = [
+      {q:"ಕಂಪ್ಯೂಟರ್‌ನ ತಾಯಿ ಎಂದು ಯಾರನ್ನು ಕರೆಯುತ್ತಾರೆ?", options:["ಚಾರ್ಲ್ಸ್ ಬ್ಯಾಬೇಜ್","ಆಡಾ ಲವ್‌ಲೇಸ್","ಅಲನ್ ಟ್ಯೂರಿಂಗ್","ಬಿಲ್ ಗೇಟ್ಸ್"], answer:1},
+      {q:"ಕರ್ನಾಟಕದ ರಾಜಧಾನಿ ಯಾವುದು?", options:["ಮೈಸೂರು","ಬೆಳಗಾವಿ","ಬೆಂಗಳೂರು","ಧಾರವಾಡ"], answer:2},
+      {q:"ಭಾರತದ ಮೊದಲ ಪ್ರಧಾನ ಮಂತ್ರಿ ಯಾರು?", options:["ಗಾಂಧೀಜಿ","ಜವಾಹರಲಾಲ್ ನೆಹರು","ಸುಭಾಷ್ ಬೋಸ್","ಇಂದಿರಾ ಗಾಂಧಿ"], answer:1},
+      {q:"ರಕ್ತದ ಶುದ್ಧೀಕರಣದ ಅಂಗ ಯಾವುದು?", options:["ಹೃದಯ","ಮೂತ್ರಪಿಂಡ","ಕಲುಳ್","ಫೆಫುಸುಗಳು"], answer:1},
+      {q:"ಆಕ್ಸಿಜನ್ ರಾಸಾಯನಿಕ ಚಿಹ್ನೆ ಯಾವುದು?", options:["O2","CO2","H2O","O"], answer:0},
+      {q:"ಭೂಮಿಯ ಸೂರ್ಯನ ಸುತ್ತಲಿನ ಪರಿಕ್ರಮಣ ಅವಧಿ ಎಷ್ಟು?", options:["365 ದಿನ","30 ದಿನ","24 ಗಂಟೆ","12 ತಿಂಗಳು"], answer:0},
+      {q:"ಭಾರತದ ಅತಿ ಉದ್ದವಾದ ನದಿ ಯಾವುದು?", options:["ಕಾವೇರಿ","ಗಂಗಾ","ಗೋದಾವರಿ","ಯಮುನಾ"], answer:1},
+      {q:"‘ರಾಜಕಿಯ ಕವಿರಾಜಮಾರ್ಗ’ ಗ್ರಂಥವನ್ನು ಯಾರ ಬರೆದರು?", options:["ಪಂಪ","ಪೊನ್ನ","ಅಮೋಘವರ್ಷ","ರನ್ನ"], answer:2}
+    ];
+
+    const loginSection=document.getElementById('login-section');
+    const quizSection=document.getElementById('quiz-section');
+    const resultSection=document.getElementById('result-section');
+    const nameInput=document.getElementById('name-input');
+    const startBtn=document.getElementById('start-btn');
+    const questionNumber=document.getElementById('question-number');
+    const questionText=document.getElementById('question-text');
+    const choicesEl=document.getElementById('choices');
+    const submitBtn=document.getElementById('submit-btn');
+    const timerEl=document.getElementById('timer');
+    const scoreText=document.getElementById('score-text');
+    const restartBtn=document.getElementById('restart-btn');
+
+    let current=0;
+    let score=0;
+    let timer;
+    let timeLeft=30;
+    let selectedChoice=null;
+
+    startBtn.onclick=()=>{
+      const name=nameInput.value.trim();
+      if(!name){alert('ದಯವಿಟ್ಟು ನಿಮ್ಮ ಹೆಸರು ನಮೂದಿಸಿ!');return;}
+      loginSection.classList.add('hidden');
+      quizSection.classList.remove('hidden');
+      startQuiz();
+    };
+
+    function startQuiz(){
+      current=0;score=0;
+      renderQuestion();
+    }
+
+    function renderQuestion(){
+      if(current>=QUESTIONS.length){return showResult();}
+      const q=QUESTIONS[current];
+      questionNumber.textContent=`ಪ್ರಶ್ನೆ ${current+1} / ${QUESTIONS.length}`;
+      questionText.textContent=q.q;
+      choicesEl.innerHTML='';
+      submitBtn.disabled=true;
+      q.options.forEach((opt,idx)=>{
+        const div=document.createElement('div');
+        div.className='choice';
+        div.textContent=`${String.fromCharCode(65+idx)}. ${opt}`;
+        div.onclick=()=>selectChoice(idx,div);
+        choicesEl.appendChild(div);
+      });
+      resetTimer();
+    }
+
+    function selectChoice(idx,el){
+      selectedChoice=idx;
+      Array.from(choicesEl.children).forEach(c=>c.classList.remove('selected'));
+      el.classList.add('selected');
+      submitBtn.disabled=false;
+    }
+
+    function resetTimer(){
+      clearInterval(timer);
+      timeLeft=30;
+      timerEl.textContent=`🕒 ${timeLeft}`;
+      timer=setInterval(()=>{
+        timeLeft--;
+        timerEl.textContent=`🕒 ${timeLeft}`;
+        if(timeLeft<=0){clearInterval(timer);autoSubmit();}
+      },1000);
+    }
+
+    function autoSubmit(){
+      submitAnswer();
+    }
+
+    submitBtn.onclick=submitAnswer;
+    function submitAnswer(){
+      clearInterval(timer);
+      const q=QUESTIONS[current];
+      Array.from(choicesEl.children).forEach((c,i)=>{
+        if(i===q.answer)c.classList.add('correct');
+        else if(i===selectedChoice)c.classList.add('wrong');
+      });
+      if(selectedChoice===q.answer)score++;
+      submitBtn.disabled=true;
+      setTimeout(()=>{
+        current++;
+        renderQuestion();
+      },1500);
+    }
+
+    function showResult(){
+      quizSection.classList.add('hidden');
+      resultSection.classList.remove('hidden');
+      scoreText.textContent=`ನೀವು ಪಡೆದ ಅಂಕ: ${score} / ${QUESTIONS.length}`;
+    }
+
+    restartBtn.onclick=()=>{
+      resultSection.classList.add('hidden');
+      loginSection.classList.remove('hidden');
+    };
+  </script>
+</body>
+</html>
